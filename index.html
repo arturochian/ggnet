@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>ggnet by briatte</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>ggnet</h1>
+        <h2>Simple network plots with ggplot2 in R.</h2>
+        <a href="https://github.com/briatte/ggnet" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a name="ggnet-simple-network-plots-with-ggplot2" class="anchor" href="#ggnet-simple-network-plots-with-ggplot2"><span class="octicon octicon-link"></span></a>ggnet: simple network plots with ggplot2</h1>
+
+<p>This function is part of the <a href="https://github.com/ggobi/ggally">GGally</a> package. Install it from CRAN or from GitHub:</p>
+
+<pre><code>install.packages("GGally", type = "source")
+devtools::install_github("ggally", "ggobi")
+</code></pre>
+
+<p><img src="example1.png" alt="French MPs on Twitter"></p>
+
+<p>A plot of Twitter connexions between 339 French MPs currently in office, colored by parliamentary groups and quartile-weighted by degree. See <a href="functions.R"><code>functions.R</code></a> for network exploration routines. Data assembled by scraping a few web sources in May 2013 with the help of <a href="http://laspic.hypotheses.org/">Jonathan Chibois</a> and Benjamin Ooghe-Tabanou from <a href="http://www.regardscitoyens.org/">Regards Citoyens</a>. My <a href="http://politbistro.hypotheses.org/1752">blog post at Polit'bistro</a> has more details.</p>
+
+<h2>
+<a name="howto" class="anchor" href="#howto"><span class="octicon octicon-link"></span></a>HOWTO</h2>
+
+<p>The functions builds on <a href="https://github.com/sumtxt">Moritz Marbach</a>'s <a href="http://sumtxt.wordpress.com/2011/07/02/visualizing-networks-with-ggplot2-in-r/"><code>plotg()</code></a> function and accepts the following arguments:</p>
+
+<pre><code>ggnet(net,                          # an object of class network
+      mode = "fruchtermanreingold", # placement algorithm
+      size = 12,                    # node size
+      alpha = .75,                  # transparency
+      weight.method = "none",       # what to weight the nodes with: "degree", "indegree", "outdegree"
+      names = c("", ""),            # what to call the node color and node weight legends
+      node.group = NULL,            # what to color the nodes with
+      node.color = NULL,            # what colors to use for the node classes
+      node.alpha = NULL,            # transparency for nodes (inherits from alpha)
+      segment.alpha = NULL,         # transparency for links (inherits from alpha)
+      segment.color = "grey",       # default links are rgb(190, 190, 190)
+      segment.size  = .25,          # set to 0 to remove from plot
+      arrow.size = 0,               # set to 0 to remove from plot
+      label.nodes = FALSE,          # add vertex names in small print; can be a list of vertex names
+      top8.nodes  = FALSE,          # color the top 8 nodes by weighting method with ColorBrewer Set1
+      trim.labels = TRUE,           # remove '@', 'http://' and 'www.' from vertex names
+      quantize.weights = FALSE,     # break weights to quartiles
+      subset.threshold = 0,         # what nodes to exclude, based on weight.method ≥ subset
+      legend.position = "right",    # set to "none" to remove from plot
+      ...)                          # arguments passed to node labels with geom_text()
+</code></pre>
+
+<p>The function needs an object of class <code>network</code> and automatically handles the conversion of objects of class <code>igraph</code> by calling the <a href="http://intergraph.r-forge.r-project.org/"><code>intergraph</code></a> package. It supports all placement algorithms available through the <code>sna</code> package. The code has been submitted to the <a href="https://github.com/ggobi/ggally"><code>GGally</code></a> package.</p>
+
+<h2>
+<a name="demo" class="anchor" href="#demo"><span class="octicon octicon-link"></span></a>DEMO</h2>
+
+<p>The <code>ggnet()</code> function returns a <code>ggplot</code> object in which nodes are represented by points that can be colored and/or weighted using proportional scaling. The network above can therefore be set to look like this when the segments are not drawn and the nodes are weighted by indegree and left uncolored:</p>
+
+<p><img src="example2.png" alt=""></p>
+
+<pre><code>ggnet(net, 
+      size = 6, 
+      segment.size = 0, 
+      weight = "indegree", 
+      legend = "none") + 
+  geom_density2d()
+</code></pre>
+
+<p>The node colors are set through a group variable colored by a discrete palette. Node groups can be any vector containing as many items as there are nodes in the network. Hence, to verify that the dual structure shown above corresponds to the left-right party divide, we group nodes by a logical value and let the function select from the default <code>Set1</code> scheme to discriminate them:</p>
+
+<p><img src="example3.png" alt=""></p>
+
+<pre><code>rightwing = ifelse(mp.groups == "NI", NA, mp.groups %in% c("UDI", "UMP"))
+ggnet(net, 
+      node.group = rightwing, 
+      alpha = .25, 
+      name = "Rightwing group")
+</code></pre>
+
+<p>The function can also label all or a selection of nodes, identified by vertex names. See, for example, how party polarization is much less obvious when you look at a single individual's network (Nathalie Kosciusko-Morizet in this example, the rightwing candidate for the mayor of Paris in the next municipal election):</p>
+
+<p><img src="example4.png" alt=""></p>
+
+<pre><code>follows.nkm = ids$Twitter %in% who.follows(df, "nk_m")$followers
+ggnet(net, 
+      size = 6, 
+      node.group = follows.nkm, 
+      alpha = .25, 
+      name = "Follows NKM",
+      label = "nk_m", 
+      color = "black")
+</code></pre>
+
+<p>The function contains a few examples with small random networks, as well as an example using the <a href="http://networkdata.ics.uci.edu/netdata/html/cities.html">city and service firms dataset</a> that is <a href="http://vlado.fmf.uni-lj.si/pub/networks/data/">also available</a> in Pajek. The visualization below uses the Kamada-Kawai placement algorithm with no node weighting, a few node labels and a default three-color scheme built from ColorBrewer's <code>Set1</code>:</p>
+
+<p><img src="http://f.hypotheses.org/wp-content/blogs.dir/42/files/2013/06/cities.png" alt=""></p>
+
+<pre><code>url = url("http://networkdata.ics.uci.edu/netdata/data/cities.RData")
+print(load(url))
+close(url)
+type = network::get.vertex.attribute(cities, "type")
+type = ifelse(grepl("City|Law", type), gsub("I+", "", type), "Firm")
+ggnet(cities,
+      mode = "kamadakawai",
+      alpha = .2,
+      node.group = type,
+      label = c("Paris", "Beijing", "Chicago"),
+      color = "darkred")
+</code></pre>
+
+<p>Some of the more experimental arguments like <code>subset.threshold</code> and <code>top8.nodes</code>, which highlight the most central nodes of a network, are shown in the <a href="https://github.com/briatte/afsp2013/blob/master/voson.R">code</a> for a <a href="https://github.com/briatte/afsp2013">conference paper</a> using online network data collected with <a href="http://voson.anu.edu.au/">VOSON</a>:</p>
+
+<p><img src="https://github.com/briatte/afsp2013/raw/master/figure.png" alt=""></p>
+
+<p>Finally, Pedro Jordano has <a href="https://github.com/briatte/ggnet/issues/3">suggested</a> adding support for bipartite networks. While <code>ggnet</code> draws only "simple" one-mode networks at the moment, it can also mimick two-mode networks, as shown in <a href="https://github.com/briatte/neta">this example</a>, using amendment co-sponsorships in the lower chamber of the French Parliament:</p>
+
+<p><img src="example5.png" alt=""></p>
+
+<pre><code># manipulate vertex labels
+i = network.vertex.names(net)
+# remove labels from actor nodes
+i[1:min(which(!is.na(as.numeric(i)))) - 1] = NA
+# mock bipartite network
+ggnet(net, size = 0, node.group = is.na(i)) + 
+  geom_point(alpha = .5, aes(size = ifelse(is.na(i), 1, 3))) + 
+  scale_size_area("", max_size = 6) +
+  theme(legend.position = "none")
+</code></pre>
+
+<p>(The code snippet above is a practical hack. There is far better code to produce authentic bipartite plots out of sparse matrix objects in the <a href="https://github.com/briatte/neta">dedicated repository</a> for this example.)</p>
+
+<h2>
+<a name="credits" class="anchor" href="#credits"><span class="octicon octicon-link"></span></a>CREDITS</h2>
+
+<p>Inspired by <a href="http://coulmont.com/index.php?s=d%C3%A9put%C3%A9s">Baptiste Coulmont</a> and <a href="http://freakonometrics.blog.free.fr/index.php?post/Twitter-deputes">Ewen Gallic</a>.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/briatte/ggnet/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/briatte/ggnet/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/briatte/ggnet"></a> is maintained by <a href="https://github.com/briatte">briatte</a>.</p>
+
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
